@@ -1,14 +1,19 @@
+from datasets import Dataset
+import os
+import pandas as pd
+import re
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
-from datasets import Dataset
-import pandas as pd
+
+device = "mps" if torch.backends.mps.is_available() else "cpu"
 
 # Tokenize the text using the GPT-2 tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 
-device = "mps" if torch.backends.mps.is_available() else "cpu"
-model = GPT2LMHeadModel.from_pretrained("gpt2")
+model = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
+
+output_dir = "./output"
 
 def dataset_from_csv(location=None):
     df = pd.read_csv(location)
@@ -28,17 +33,17 @@ def dataset_from_csv(location=None):
 train_dataset = dataset_from_csv('datasets/codesearchnet_train_py_small.csv')
 eval_dataset = dataset_from_csv('datasets/codesearchnet_valid_py_small.csv')
 
-
 training_args = TrainingArguments(
-    output_dir="./output",
+    output_dir=output_dir,
     num_train_epochs=3,
-    per_device_train_batch_size=1,
+    per_device_train_batch_size=8,
     save_steps=1000,
     save_total_limit=2,
     learning_rate=2e-5,
     optim="adamw_torch",
     # fp16=True,
-    use_mps_device=torch.backends.mps.is_available(),
+    # use_mps_device=torch.backends.mps.is_available(),
+    use_mps_device=False,
     logging_steps=100,
     dataloader_num_workers=0,
     evaluation_strategy="epoch",
@@ -61,11 +66,19 @@ trainer = Trainer(
     eval_dataset=eval_dataset,
     data_collator=data_collator,
 )
-trainer.train()
+
+resume_from_checkpoint = False
+if os.path.isdir(output_dir):
+    for element in os.listdir(output_dir):
+        if re.match("(checkpoint-\d+)", element):
+            resume_from_checkpoint=True
+            break
+        
+trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+trainer.save_model()
 
 prompt = "This function returns the sum of two numbers"
 inputs = tokenizer(prompt, return_tensors="pt")
-model = GPT2LMHeadModel.from_pretrained("gpt2")
 output = model.generate(**inputs, max_length=1024, num_return_sequences=1)
 generated_code = tokenizer.decode(output[0][0], skip_special_tokens=True)
 print(generated_code)
