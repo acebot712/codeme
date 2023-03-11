@@ -5,7 +5,7 @@ import re
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
 
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Tokenize the text using the GPT-2 tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -36,14 +36,15 @@ eval_dataset = dataset_from_csv('datasets/codesearchnet_valid_py_small.csv')
 training_args = TrainingArguments(
     output_dir=output_dir,
     num_train_epochs=3,
-    per_device_train_batch_size=8,
+    per_device_train_batch_size=64,
     save_steps=1000,
     save_total_limit=2,
     learning_rate=2e-5,
     optim="adamw_torch",
+    fp16=True,
     use_mps_device=False,
     logging_steps=100,
-    dataloader_num_workers=0,
+    dataloader_num_workers=8,
     evaluation_strategy="epoch",
     save_strategy="epoch",
     metric_for_best_model="eval_loss",
