@@ -1,0 +1,10 @@
+name: myenv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - torch==1.10.1
+    - transformers==4.11.3
+    - datasets==1.14.0
