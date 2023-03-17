@@ -36,12 +36,3 @@ ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
 # Set the entrypoint to run the fine_tune_gpu.py file
 ENTRYPOINT ["python", "fine_tune_gpu.py"]
-
-
-# docker build -t fine-tune-gpu .
-
-# docker run --gpus all -v /path/to/persistent/storage:/app/output fine-tune-gpu
-
-# docker run --gpus all -v /path/to/persistent/storage/on/host/node:/app/output fine-tune-gpu
-
-

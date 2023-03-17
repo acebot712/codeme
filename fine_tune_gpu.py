@@ -5,28 +5,33 @@ import re
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+is_cuda_available = torch.cuda.is_available()
+device = "cuda:0" if is_cuda_available else "cpu"
 
 # Tokenize the text using the GPT-2 tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 
 model = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
-
+    
 output_dir = "./output"
 
 def dataset_from_csv(location=None):
-    df = pd.read_csv(location)
-    dataset = Dataset.from_pandas(df)
-    # Filter the dataset to only include Python code
+    global tokenizer
+    if location is None:
+        raise ValueError("Please provide the location of the CSV file.")
+    dataset = Dataset.from_pandas(pd.read_csv(location))
     dataset = dataset.filter(lambda example: example["language"] == "python")
-    # Combine the docstring and code into a single string
-    dataset = dataset.map(lambda example: {"text": example["docstring"] + " " + example["code"]})
-    # Tokenize the text using the GPT-2 tokenizer
-    dataset = dataset.map(lambda example: {"tokens": example["docstring_tokens"] + example["code_tokens"]})
-    dataset = dataset.map(lambda example: {"input_ids": tokenizer.encode(example["tokens"], padding="max_length", truncation=True)})
-    dataset = dataset.map(lambda example: {"attention_mask": [float(i>0) for i in example["input_ids"]]})
-    # Set the max length to 1024
+    def combine_docstring_and_code(example):
+        example["text"] = example["docstring"] + " " + example["code"]
+        return example
+    dataset = dataset.map(combine_docstring_and_code)
+    def tokenize(example):
+        example["tokens"] = example["docstring_tokens"] + example["code_tokens"]
+        example["input_ids"] = tokenizer.encode(example["tokens"], padding="max_length", truncation=True)
+        example["attention_mask"] = [float(i>0) for i in example["input_ids"]]
+        return example
+    dataset = dataset.map(tokenize)
     dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
     return dataset
 
@@ -36,12 +41,12 @@ eval_dataset = dataset_from_csv('datasets/codesearchnet_valid_py_small.csv')
 training_args = TrainingArguments(
     output_dir=output_dir,
     num_train_epochs=3,
-    per_device_train_batch_size=64,
+    per_device_train_batch_size=21,
     save_steps=1000,
     save_total_limit=2,
     learning_rate=2e-5,
     optim="adamw_torch",
-    fp16=True,
+    fp16=is_cuda_available,
     use_mps_device=False,
     logging_steps=100,
     dataloader_num_workers=8,

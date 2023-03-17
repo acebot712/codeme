@@ -20,3 +20,14 @@
 ## Running finetuning
 1.  Give the correct dataset location `lines 28` and `line 29`
 2.  `python3 finetune.py`
+
+## The Docker way (GPU only)
+This script runs a Docker container with the specified image and arguments. To run the script:
+1. Open a terminal window
+2. Navigate to the directory containing the script and the "image.yaml" file. The container and image name will be the same
+3. Select correct `version`
+4. Run `./build-and-push.sh .`
+5. Run the script using the command
+```
+./just_run.sh --datasets /path/to/host/datasets --output /path/to/host/output --log /path/on/host/log --gpus device=0,2
+``` 
