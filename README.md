@@ -19,8 +19,9 @@
 
 ## Running finetuning
 1.  Give the correct dataset location `lines 28` and `line 29`
-2.  `python3 finetune.py`
-
+2.  Run
+    1. CPU - `python3 finetune.py`
+    2. GPU - `python script.py --train_csv datasets/codesearchnet_train_py_small.csv --eval_csv datasets/codesearchnet_valid_py_small.csv`
 ## The Docker way (GPU only)
 This script runs a Docker container with the specified image and arguments. To run the script:
 1. Open a terminal window
