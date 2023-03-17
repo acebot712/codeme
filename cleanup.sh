@@ -1,3 +1,3 @@
 # Use with caution
-rm -r output/runs/*
-rm -r output/checkpoint-*
+yes | rm -r output/runs/*
+yes | rm -r output/checkpoint-*
