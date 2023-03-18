@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Read image name and version from YAML file
 DOCKERFILE=$1
