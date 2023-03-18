@@ -151,9 +151,9 @@ terminado==0.17.1
 tinycss2==1.2.1
 tokenizers==0.13.2
 tomli==2.0.1
-torch==2.0.0.dev20230202
-torchaudio==2.0.0.dev20230202
-torchvision==0.15.0.dev20230202
+torch==2.0.0
+torchaudio==2.0.0
+torchvision==0.15.0
 tornado==6.2
 tqdm==4.64.1
 traitlets==5.9.0

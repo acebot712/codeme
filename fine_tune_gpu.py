@@ -79,8 +79,8 @@ def dataset_from_csv(location=None):
     return dataset
 
 # Create datasets from the CSV files
-train_dataset = dataset_from_csv('args.train_csv')
-eval_dataset = dataset_from_csv('args.eval_csv')
+train_dataset = dataset_from_csv(args.train_csv)
+eval_dataset = dataset_from_csv(args.eval_csv)
 
 # Set training arguments
 training_args = TrainingArguments(
