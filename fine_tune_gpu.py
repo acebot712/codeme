@@ -19,6 +19,7 @@ args = parser.parse_args()
 device = args.device
 # Check if CUDA is available
 is_cuda_available = torch.cuda.is_available()
+
 if device == 'cuda' and not is_cuda_available:
     raise ValueError("Cuda device not available!")
 
@@ -79,14 +80,14 @@ def dataset_from_csv(location=None):
     return dataset
 
 # Create datasets from the CSV files
-train_dataset = dataset_from_csv(args.train_csv)
 eval_dataset = dataset_from_csv(args.eval_csv)
+train_dataset = dataset_from_csv(args.train_csv)
 
 # Set training arguments
 training_args = TrainingArguments(
     output_dir=output_dir,
     num_train_epochs=3,
-    per_device_train_batch_size=21,
+    per_device_train_batch_size=1,
     save_steps=1000,
     save_total_limit=2,
     learning_rate=2e-5,
@@ -134,7 +135,7 @@ trainer.save_model()
 
 # Generate code given a prompt
 prompt = "This function returns the sum of two numbers"
-inputs = tokenizer(prompt, return_tensors="pt")
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 output = model.generate(**inputs, max_length=1024, num_return_sequences=1)
 generated_code = tokenizer.decode(output[0][0], skip_special_tokens=True)
 print(generated_code)
