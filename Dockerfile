@@ -1,13 +1,21 @@
 # Set the base image to the nvidia runtime image for CUDA 11.4 and cuDNN 8
-FROM nvidia/cuda:11.4.2-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:11.0.3-cudnn8-runtime-ubuntu18.04
+
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/cuda.list
+RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
+    python3-setuptools \
     git \
-    logrotate \
-    && rm -rf /var/lib/apt/lists/*
+    logrotate
+    
+RUN rm -rf /var/lib/apt/lists/*
 
 # Copy logrotate config file
 COPY logrotate.conf /etc/logrotate.d/
@@ -20,6 +28,7 @@ WORKDIR /app
 
 # Create a virtual environment and install dependencies from requirements.txt
 RUN python3 -m venv venv
+RUN . venv/bin/activate && pip install --upgrade pip
 RUN . venv/bin/activate && pip install -r requirements.txt
 
 # Set the NVIDIA_VISIBLE_DEVICES environment variable to the GPU ID you want to use
