@@ -32,15 +32,32 @@ done
 
 # Run docker container
 IMAGE=$(yq r image.yaml image)
-docker create \
-    --cidfile /var/run/${IMAGE}.cid \
+
+if command -v nvidia-smi &> /dev/null
+then
+    docker run \
+    --platform=linux/amd64 \
     --gpus "${GPUS}" \
     -v "${DATASETS_DIR}":/app/datasets \
     -v "${OUTPUT_DIR}":/app/output \
     -v "${LOG_DIR}":/app/log \
     -p 6006:6006 \
     --name "${IMAGE}" \
+    --cidfile ./${IMAGE}.cid \
+    --detach \
     "${IMAGE}"
+else
+    docker run \
+    --platform=linux/amd64 \
+    -v "${DATASETS_DIR}":/app/datasets \
+    -v "${OUTPUT_DIR}":/app/output \
+    -v "${LOG_DIR}":/app/log \
+    -p 6006:6006 \
+    --name "${IMAGE}" \
+    --cidfile ./${IMAGE}.cid \
+    --detach \
+    "${IMAGE}"
+fi
 
-docker start "$(cat /var/run/${IMAGE}.cid)"
-# ./just_run.sh --datasets /path/to/host/datasets --output /path/to/host/output --log /path/on/host/log --gpus device=0,2
+# ./just-run.sh --datasets /path/to/host/datasets --output /path/to/host/output --log /path/on/host/log --gpus device=0,2
+# GPU: sudo docker run -v /opt/data/datasets:/app/datasets -v /opt/data/output:/app/output -v /opt/data/log:/var/log -p 6006:6006 --gpus device="MIG-GPU-3a712174-fefc-7f55-d9fc-1f6d69c3dfb5/5/0" --detach jfrog.fkinternal.com/n200m-common-infra/fine-tune-gpu:0.0.2
