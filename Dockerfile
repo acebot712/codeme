@@ -35,7 +35,7 @@ RUN . venv/bin/activate && pip install -r requirements.txt
 ENV NVIDIA_VISIBLE_DEVICES=all
 
 # Run fine_tune_gpu.py and write output and error to log files
-CMD . venv/bin/activate && python fine_tune_gpu.py > /var/log/output.log 2> /var/log/error.log
+CMD . venv/bin/activate && python fine_tune_gpu.py --train_csv $TRAIN_CSV --eval_csv $EVAL_CSV --device $DEVICE > /var/log/output.log 2> /var/log/error.log
 
 # Expose the port for TensorBoard
 EXPOSE 6006

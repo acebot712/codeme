@@ -31,13 +31,13 @@ if device == 'cuda' and not is_cuda_available:
     raise ValueError("Cuda device not available!")
 
 # Initialize GPT-2 tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+tokenizer = GPT2Tokenizer.from_pretrained("./models/gpt2")
 
 # Set the pad token to the end of sentence token
 tokenizer.pad_token = tokenizer.eos_token
 
 # Initialize GPT-2 model and move it to the device
-model = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
+model = GPT2LMHeadModel.from_pretrained("./models/gpt2").to(device)
 
 # Set output directory
 output_dir = "./output"
