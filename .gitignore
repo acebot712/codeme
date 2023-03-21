@@ -732,6 +732,7 @@ FodyWeavers.xsd
 
 # Model
 output/
+models/
 
 # DockerImage
 *.tar
