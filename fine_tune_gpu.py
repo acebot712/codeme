@@ -100,7 +100,6 @@ training_args = TrainingArguments(
     learning_rate=2e-5,
     optim="adamw_torch",
     fp16=is_cuda_available,
-    use_mps_device=False,
     logging_steps=100,
     dataloader_num_workers=0,
     evaluation_strategy="epoch",

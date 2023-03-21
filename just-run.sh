@@ -86,4 +86,4 @@ fi
 #     -p 6006:6006 \
 #     --gpus device="MIG-GPU-3a712174-fefc-7f55-d9fc-1f6d69c3dfb5/5/0" \
 #     --detach \
-#     jfrog.fkinternal.com/n200m-common-infra/fine-tune-gpu:0.0.4
+#     jfrog.fkinternal.com/n200m-common-infra/fine-tune-gpu:0.0.6

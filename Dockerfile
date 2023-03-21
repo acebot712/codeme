@@ -2,8 +2,8 @@
 FROM nvidia/cuda:11.0.3-cudnn8-runtime-ubuntu18.04
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
-RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/cuda.list
+RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+RUN echo "deb [trusted=yes] http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list
 RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
 
 # Install necessary dependencies
@@ -29,7 +29,8 @@ WORKDIR /app
 # Create a virtual environment and install dependencies from requirements.txt
 RUN python3 -m venv venv
 RUN . venv/bin/activate && pip install --upgrade pip
-RUN . venv/bin/activate && pip install -r requirements.txt
+RUN . venv/bin/activate && pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
+RUN . venv/bin/activate && pip install --no-cache-dir --trusted-host download.pytorch.org torch==1.7.1+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 
 # Set the NVIDIA_VISIBLE_DEVICES environment variable to the GPU ID you want to use
 ENV NVIDIA_VISIBLE_DEVICES=all
