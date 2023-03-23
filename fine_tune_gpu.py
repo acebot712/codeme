@@ -8,42 +8,8 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArgume
 import time
 import sys
 
-print("Hello World")
-print("Hello Error", file=sys.stderr)
-print(torch.rand((3,5)))
-print(f"torch.cuda.is_available(): {torch.cuda.is_available()}")
-
-# Define command line arguments</span>
-parser = argparse.ArgumentParser()
-parser.add_argument('--device', type=str, default='cpu', help="Device to use for training, either 'cpu' or 'cuda'")
-parser.add_argument("--train_csv", type=str, help="Location of train CSV file")
-parser.add_argument("--eval_csv", type=str, help="Location of eval CSV file")
-
-# Parse command line arguments</span>
-args = parser.parse_args()
-
-# Set the device based on user input</span>
-device = args.device
-# Check if CUDA is available
-is_cuda_available = torch.cuda.is_available()
-
-if device == 'cuda' and not is_cuda_available:
-    raise ValueError("Cuda device not available!")
-
-# Initialize GPT-2 tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained("./models/gpt2")
-
-# Set the pad token to the end of sentence token
-tokenizer.pad_token = tokenizer.eos_token
-
-# Initialize GPT-2 model and move it to the device
-model = GPT2LMHeadModel.from_pretrained("./models/gpt2").to(device)
-
-# Set output directory
-output_dir = "./output"
-
 # Function to read CSV file and return a dataset
-def dataset_from_csv(location=None):
+def dataset_from_csv(location=None, tokenizer=None):
     """
     Reads a CSV file and returns a dataset
 
@@ -53,11 +19,12 @@ def dataset_from_csv(location=None):
     Returns:
     Dataset: A dataset object
     """
-    global tokenizer
-
     # Raise an error if no location is provided
     if location is None:
         raise ValueError("Please provide the location of the CSV file.")
+    
+    if tokenizer is None:
+        raise ValueError("Please pass a tokenizer to the function.")
 
     # Read the CSV file and create a dataset from it
     dataset = Dataset.from_pandas(pd.read_csv(location))
@@ -86,62 +53,99 @@ def dataset_from_csv(location=None):
 
     return dataset
 
-# Create datasets from the CSV files
-eval_dataset = dataset_from_csv(args.eval_csv)
-train_dataset = dataset_from_csv(args.train_csv)
+if __name__ == '__main__':
 
-# Set training arguments
-training_args = TrainingArguments(
-    output_dir=output_dir,
-    num_train_epochs=3,
-    per_device_train_batch_size=1,
-    save_steps=1000,
-    save_total_limit=2,
-    learning_rate=2e-5,
-    optim="adamw_torch",
-    fp16=is_cuda_available,
-    logging_steps=100,
-    dataloader_num_workers=0,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
-    metric_for_best_model="eval_loss",
-    load_best_model_at_end=True,
-    prediction_loss_only=True
-)
+    print("Hello World")
+    print("Hello Error", file=sys.stderr)
+    print(torch.rand((3,5)))
+    print(f"torch.cuda.is_available(): {torch.cuda.is_available()}")
 
-# Function to collate data
-def data_collator(data):
-    input_ids = torch.stack([f["input_ids"] for f in data])
-    attention_mask = torch.stack([f["attention_mask"] for f in data])
-    labels = torch.stack([f["input_ids"] for f in data])
-    return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": labels}
+    # Define command line arguments</span>
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device', type=str, default='cpu', help="Device to use for training, either 'cpu' or 'cuda'")
+    parser.add_argument("--train_csv", type=str, help="Location of train CSV file")
+    parser.add_argument("--eval_csv", type=str, help="Location of eval CSV file")
 
-# Initialize trainer
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    data_collator=data_collator,
-)
+    # Parse command line arguments</span>
+    args = parser.parse_args()
 
-# Check if there is a checkpoint in the output directory
-resume_from_checkpoint = False
-if os.path.isdir(output_dir):
-    for element in os.listdir(output_dir):
-        if re.match("(checkpoint-\d+)", element):
-            resume_from_checkpoint=True
-            break
+    # Set the device based on user input</span>
+    device = args.device
+    # Check if CUDA is available
+    is_cuda_available = torch.cuda.is_available()
 
-# Train the model
-trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    if device == 'cuda' and not is_cuda_available:
+        raise ValueError("Cuda device not available!")
 
-# Save the model
-trainer.save_model()
+    # Initialize GPT-2 tokenizer
+    tokenizer = GPT2Tokenizer.from_pretrained("./models/gpt2")
 
-# Generate code given a prompt
-prompt = "This function returns the sum of two numbers"
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-output = model.generate(**inputs, max_length=1024, num_return_sequences=1)
-generated_code = tokenizer.decode(output[0][0], skip_special_tokens=True)
-print(generated_code)
+    # Set the pad token to the end of sentence token
+    tokenizer.pad_token = tokenizer.eos_token
+
+    # Initialize GPT-2 model and move it to the device
+    model = GPT2LMHeadModel.from_pretrained("./models/gpt2").to(device)
+
+    # Set output directory
+    output_dir = "./output"
+
+
+    # Create datasets from the CSV files
+    eval_dataset = dataset_from_csv(args.eval_csv, tokenizer=tokenizer)
+    train_dataset = dataset_from_csv(args.train_csv, tokenizer=tokenizer)
+
+    # Set training arguments
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        num_train_epochs=3,
+        per_device_train_batch_size=1,
+        save_steps=1000,
+        save_total_limit=2,
+        learning_rate=2e-5,
+        optim="adamw_torch",
+        fp16=is_cuda_available,
+        logging_steps=100,
+        dataloader_num_workers=0,
+        evaluation_strategy="epoch",
+        save_strategy="epoch",
+        metric_for_best_model="eval_loss",
+        load_best_model_at_end=True,
+        prediction_loss_only=True
+    )
+
+    # Function to collate data
+    def data_collator(data):
+        input_ids = torch.stack([f["input_ids"] for f in data])
+        attention_mask = torch.stack([f["attention_mask"] for f in data])
+        labels = torch.stack([f["input_ids"] for f in data])
+        return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": labels}
+
+    # Initialize trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=data_collator,
+    )
+
+    # Check if there is a checkpoint in the output directory
+    resume_from_checkpoint = False
+    if os.path.isdir(output_dir):
+        for element in os.listdir(output_dir):
+            if re.match("(checkpoint-\d+)", element):
+                resume_from_checkpoint=True
+                break
+
+    # Train the model
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+
+    # Save the model
+    trainer.save_model()
+
+    # Generate code given a prompt
+    prompt = "This function returns the sum of two numbers"
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    output = model.generate(**inputs, max_length=1024, num_return_sequences=1)
+    generated_code = tokenizer.decode(output[0][0], skip_special_tokens=True)
+    print(generated_code)
